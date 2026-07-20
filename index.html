@@ -137,13 +137,29 @@
 </main>
 <footer><div class="container foot"><span>© 2026 Juan David Escobar</span><span>Bogotá, Colombia · cv.juandaescobarr.com</span></div></footer>
 <script>
-const LEGACY_URL="https://raw.githubusercontent.com/juandaes21/cv.juandaescobarr.com/de0d3b012fb10009e03c35b69b20f28b10ebcfe9/index.html";
+const fileAssets={
+  portrait:"./f58bd69b-a414-46d6-858a-8eb59e659121-1_all_35799.jpg",
+  es:"./HV JUAN DAVID ESCOBAR 2026-es.pdf",
+  en:"./CV-Juan-David-Escobar-ES.pdf"
+};
 let language="es";
-let assetsPromise;
-async function loadLegacyAssets(){if(assetsPromise)return assetsPromise;assetsPromise=(async()=>{const response=await fetch(LEGACY_URL,{cache:"force-cache"});if(!response.ok)throw new Error(`Asset source returned ${response.status}`);const source=await response.text();const imageMatch=source.match(/<img alt="Juan David Escobar en traje azul" src="(data:image\/jpeg;base64,[^"]+)"/);const pdfMatch=source.match(/const pdfs=\{\s*es:"([^"]+)",\s*en:"([^"]+)"\s*\};/s);if(!imageMatch||!pdfMatch)throw new Error("Could not extract embedded portfolio assets");return{image:imageMatch[1],pdfs:{es:pdfMatch[1],en:pdfMatch[2]}}})();return assetsPromise}
-async function hydratePortrait(){try{const assets=await loadLegacyAssets();const image=document.getElementById("portraitImage");image.addEventListener("load",()=>image.classList.add("loaded"),{once:true});image.src=assets.image}catch(error){console.error("Portrait load failed",error)}}
-function base64ToBlob(encoded,type){const clean=encoded.replace(/\s/g,"");const raw=atob(clean);const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Blob([bytes],{type})}
-async function downloadCV(button){const buttons=[...document.querySelectorAll(".js-download")];buttons.forEach(el=>el.classList.add("loading"));const original=button?.innerHTML;if(button)button.textContent=language==="es"?"Preparando PDF…":"Preparing PDF…";try{const assets=await loadLegacyAssets();const blob=base64ToBlob(assets.pdfs[language],"application/pdf");const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=language==="es"?"HV-Juan-David-Escobar-2026-ES-2-paginas.pdf":"CV-Juan-David-Escobar-2026-EN-2-pages.pdf";document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}catch(error){console.error(error);alert(language==="es"?"No fue posible preparar la hoja de vida. Revisa tu conexión e inténtalo de nuevo.":"The CV could not be prepared. Check your connection and try again.")}finally{buttons.forEach(el=>el.classList.remove("loading"));if(button&&original)button.innerHTML=original}}
+function hydratePortrait(){
+  const image=document.getElementById("portraitImage");
+  if(!image)return;
+  image.addEventListener("load",()=>image.classList.add("loaded"),{once:true});
+  image.addEventListener("error",()=>console.error("Portrait file could not be loaded"),{once:true});
+  image.src=encodeURI(fileAssets.portrait);
+}
+function downloadCV(button){
+  const source=language==="es"?fileAssets.es:fileAssets.en;
+  const link=document.createElement("a");
+  link.href=encodeURI(source);
+  link.download=language==="es"?"HV-Juan-David-Escobar-2026-ES.pdf":"CV-Juan-David-Escobar-2026-EN.pdf";
+  link.rel="noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
 document.querySelectorAll(".js-download").forEach(button=>button.addEventListener("click",()=>downloadCV(button)));
 document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",()=>{language=button.dataset.lang;document.documentElement.dataset.language=language;document.documentElement.lang=language;document.querySelectorAll("[data-lang]").forEach(item=>{const active=item.dataset.lang===language;item.classList.toggle("active",active);item.setAttribute("aria-pressed",String(active))});document.title=language==="es"?"Juan David Escobar — Perfil profesional":"Juan David Escobar — Professional profile"}));
 const menuButton=document.querySelector(".menu-btn");const mobileNav=document.querySelector(".mobile-nav");function closeMenu(){mobileNav.classList.remove("open");mobileNav.setAttribute("aria-hidden","true");menuButton.setAttribute("aria-expanded","false")}menuButton.addEventListener("click",()=>{const open=!mobileNav.classList.contains("open");mobileNav.classList.toggle("open",open);mobileNav.setAttribute("aria-hidden",String(!open));menuButton.setAttribute("aria-expanded",String(open))});mobileNav.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeMenu));hydratePortrait();
