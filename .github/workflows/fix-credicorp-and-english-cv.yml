@@ -1,0 +1,52 @@
+name: Fix Credicorp labels and English CV
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-credicorp-and-english-cv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update experience labels and English PDF
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old_role = '<article class="role"><div class="date"><strong>Credicorp Capital</strong><span>Jul 2024 - Jul 2025</span><br>Bogotá</div><div><h3 data-es>Practicante - Trading Renta Variable</h3><h3 data-en>Equity Trading Intern</h3><div class="company">Equity Trading</div>'
+          new_role = '<article class="role"><div class="date"><strong>Equity Trading</strong><span>Jul 2024 - Jul 2025</span><br>Bogotá</div><div><h3 data-es>Practicante - Trading Renta Variable</h3><h3 data-en>Equity Trading Intern</h3><div class="company">Credicorp Capital</div>'
+
+          if old_role not in text:
+              raise RuntimeError('Could not find the Credicorp experience block')
+          text = text.replace(old_role, new_role, 1)
+
+          old_pdf = 'en:"./CV-Juan-David-Escobar-ES.pdf"'
+          new_pdf = 'en:"./CV JUAN DAVID ESCOBAR 2026-en.pdf"'
+          if old_pdf not in text:
+              raise RuntimeError('Could not find the old English PDF path')
+          text = text.replace(old_pdf, new_pdf, 1)
+
+          if not Path('CV JUAN DAVID ESCOBAR 2026-en.pdf').exists():
+              raise RuntimeError('The uploaded English PDF is missing')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Fix Credicorp labels and English CV download"
+          git push
